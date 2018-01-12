@@ -17,9 +17,11 @@ void
 read_MNIST_data(vector<Mat> &trainX, vector<Mat> &testX, Mat &trainY, Mat &testY){
     
 
+	//readImage(trainX, trainY,trainX, trainY);
+    //readData(trainX, trainY, "mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte", 60000);
+    //readData(testX, testY, "mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte", 10000);
+    readImage(trainX,trainY,testX,testY);
 
-    readData(trainX, trainY, "mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte", 60000);
-    readData(testX, testY, "mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte", 10000);
     preProcessing(trainX, testX);
     dataEnlarge(trainX, trainY);
 
@@ -95,6 +97,92 @@ readData(vector<Mat> &x, Mat &y, string xpath, string ypath, int number_of_image
     y = Mat::zeros(1, number_of_images, CV_64FC1);
     read_Mnist_Label(ypath, y);
 }
+
+void
+readImage(vector<Mat> &trainx, Mat &trainy,vector<Mat> &testx, Mat &testy){
+
+	Mat trainY = Mat::zeros(1, 536+645+276, CV_64FC1);
+	Mat testY = Mat::zeros(1,200+76, CV_64FC1);
+
+	for ( int i=1 ; i <= 536 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"image/correct (%d).jpg",i);
+		buf = imread(file_name,0);
+		resize(buf,buf,Size(28,28));
+		trainx.push_back(buf);
+	}
+
+	for ( int i=1 ; i <= 645 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"image/img(%d).png",i);
+		buf = imread(file_name,0);
+		resize(buf,buf,Size(28,28));
+		Canny(buf, buf, 80, 160, 3);
+		trainx.push_back(buf);
+	}
+
+	for ( int i=1 ; i <= 276 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"image/basic_x (%d).png",i);
+		buf = imread(file_name,0);
+		resize(buf,buf,Size(28,28));
+		Canny(buf, buf, 80, 160, 3);
+		trainx.push_back(buf);
+	}
+
+	for(int j = 0; j < 536+645+276; j++){
+		unsigned char temp = 1;
+		if (j<536+645) trainY.ATD(0, j) = (double)temp;
+		else trainY.ATD(0, j) = 0;
+	}
+
+
+	for ( int i=646 ; i <= 845 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"image/img(%d).png",i);
+		buf = imread(file_name,0);
+		resize(buf,buf,Size(28,28));
+		Canny(buf, buf, 80, 160, 3);
+		testx.push_back(buf);
+	}
+
+	for ( int i=1 ; i <= 76 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"image/incorrect (%d).jpg",i);
+		buf = imread(file_name,0);
+		resize(buf,buf,Size(28,28));
+		testx.push_back(buf);
+	}
+
+	for(int j = 0; j < 200+76; j++){
+		unsigned char temp = 1;
+		if (j < 200) testY.ATD(0, j) = (double)temp;
+		else trainY.ATD(0, j) = 0;
+	}
+
+	for(int i = 0; i < trainx.size(); i++){
+		trainx[i].convertTo(trainx[i], CV_64FC1, 1.0/255, 0);
+	}
+	for(int i = 0; i < testx.size(); i++){
+		testx[i].convertTo(testx[i], CV_64FC1, 1.0/255, 0);
+	}
+
+	trainY.copyTo(trainy);
+	testY.copyTo(testy);
+	trainY.release();
+	testY.release();
+}
+
 
 Mat 
 concat(const vector<Mat> &vec){

@@ -15,6 +15,8 @@ void read_Mnist_Label(string, Mat &);
 
 void readData(vector<Mat> &, Mat &, string, string, int);
 
+void readImage(vector<Mat> &, Mat &, vector<Mat> &, Mat &);
+
 void preProcessing(vector<Mat>&, vector<Mat>&);
 
 int ReverseInt (int);

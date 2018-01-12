@@ -34,6 +34,7 @@ getSample(const vector<Mat>& src1, vector<Mat>* dst1, const Mat& src2, Mat* dst2
             return;
         }
         random_shuffle(sample_vec.begin(), sample_vec.end());
+
         for(int i = 0; i < _size; i++){
             dst1 -> push_back(src1[sample_vec[i]]);
             for(int j = 0; j < src2.rows; j++){

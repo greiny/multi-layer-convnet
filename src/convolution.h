@@ -1,5 +1,6 @@
 #pragma once
 #include "general_settings.h"
+#include "save_weights.h"
 #include <unordered_map>
 
 using namespace std;
@@ -26,3 +27,4 @@ void convAndPooling(const vector<Mat> &, const vector<Cvl> &,
 
 void hashDelta(const Mat &, unordered_map<string, Mat> &, int , int );
 void convAndPooling(const vector<Mat> &, const vector<Cvl> &, vector<vector<Mat> > &);
+void convAndPooling4Test(const vector<Mat> &, const vector<Cvl> &, vector<vector<Mat> > &);

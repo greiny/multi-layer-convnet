@@ -74,12 +74,12 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
         for(int epo = 1; epo <= training_epochs; epo++){
             for(; k <= iter_per_epo * epo; k++){
                 log_iter = k;
-                string path = "log/iter_" + to_string(log_iter);
-                $$LOG mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); $$_LOG
+                //string path = "log/iter_" + to_string(log_iter);
+                //$$LOG mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); $$_LOG
                 if(k > 30) {Momentum_w = 0.95; Momentum_b = 0.95; Momentum_d2 = 0.90;}
                 vector<Mat> batchX;
                 Mat batchY = Mat::zeros(y.rows, batch_size, CV_64FC1); 
-                getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);    
+                getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);
                 cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;           
                 getNetworkCost(batchX, batchY, CLayers, HiddenLayers, smr);
                 // softmax update
@@ -118,13 +118,13 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 batchX.clear();
                 vector<Mat>().swap(batchX);
                 batchY.release();
-                $$LOG saveConvKernel(CLayers, path); $$_LOG
+                //$$LOG saveConvKernel(CLayers, path); $$_LOG
             } 
             if(! is_gradient_checking){
-                cout<<"Test training data: ";
+                cout<<"Test with training data: ";
                 testNetwork(x, y, CLayers, HiddenLayers, smr);
-                cout<<"Test testing data: ";
-                testNetwork(tx, ty, CLayers, HiddenLayers, smr);
+                cout<<"Test with testing data: ";
+                testNetwork4test(tx, ty, CLayers, HiddenLayers, smr);
             }
         }
 

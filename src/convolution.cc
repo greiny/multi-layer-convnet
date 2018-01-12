@@ -383,11 +383,68 @@ convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vector<M
             tpvec[i].clear();
         }
         int pdim = convConfig[cl].PoolingDim;
+
         for(int s = 0; s < nsamples; s++){
             for(int m = 0; m < res[s].size(); m++){
-                for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+                for(int k = 0; k < convConfig[cl].KernelAmount; k++)
+                {
                     Mat temp = rot90(CLayers[cl].layer[k].W, 2);
                     Mat tmpconv = convCalc(res[s][m], temp, CONV_VALID);
+                    tmpconv += CLayers[cl].layer[k].b;
+                    tmpconv = nonLinearity(tmpconv);
+                    tpvec[s].push_back(tmpconv);
+                }
+                if(convConfig[cl].useLRN){
+                    std::vector<Mat>tmp;
+                    for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+                        Mat temp = tpvec[s][m * convConfig[cl].KernelAmount + k];
+                        temp = localResponseNorm(tpvec, cl, k, s, m);
+                        tmp.push_back(temp);
+                    }
+                    for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+                        Mat temp = tmp[k];
+                        tpvec[s][m * convConfig[cl].KernelAmount + k] = Pooling(tmp[k], pdim, pdim, pooling_method);
+                    }
+                }else{
+                    for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+                        Mat temp = tpvec[s][m * convConfig[cl].KernelAmount + k];
+                        tpvec[s][m * convConfig[cl].KernelAmount + k] = Pooling(temp, pdim, pdim, pooling_method);
+                    }
+                }
+            }
+        }
+        swap(res, tpvec);
+    }
+    for(int i = 0; i < tpvec.size(); i++){
+        tpvec[i].clear();
+    }
+    tpvec.clear();
+}
+
+void
+convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vector<Mat> > &res){
+
+    int nsamples = x.size();
+    res.clear();
+    for(int i = 0; i < nsamples; i++){
+        vector<Mat> tmp;
+        tmp.push_back(x[i]);
+        res.push_back(tmp);
+    }
+    vector<vector<Mat> > tpvec(nsamples);
+    for(int cl = 0; cl < convConfig.size(); cl++){
+        for(int i = 0; i < tpvec.size(); i++){
+            tpvec[i].clear();
+        }
+        int pdim = convConfig[cl].PoolingDim;
+
+        for(int s = 0; s < nsamples; s++){
+            for(int m = 0; m < res[s].size(); m++){
+                for(int k = 0; k < convConfig[cl].KernelAmount; k++)
+                {
+                    Mat temp = rot90(CLayers[cl].layer[k].W, 2);
+                    Mat tmpconv = convCalc(res[s][m], temp, CONV_VALID);
+                    if (s%10 == 1) saveConvImage(s,k, tmpconv, "log/");
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
                     tpvec[s].push_back(tmpconv);

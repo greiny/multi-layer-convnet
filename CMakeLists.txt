@@ -1,5 +1,12 @@
 project( conv )
 find_package( OpenCV REQUIRED )
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+
+if(COMMAND cmake_policy)
+	cmake_policy(SET CMP0003 OLD)
+	cmake_policy(SET CMP0015 OLD)
+endif(COMMAND cmake_policy)
+add_definitions(-std=c++0x -g -O3)
 aux_source_directory( src/. src_list )
 add_executable( conv ${src_list} )
 target_link_libraries (conv ${OpenCV_LIBS})
