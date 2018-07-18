@@ -80,7 +80,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 vector<Mat> batchX;
                 Mat batchY = Mat::zeros(y.rows, batch_size, CV_64FC1); 
                 getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);
-                cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;           
+                cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;
                 getNetworkCost(batchX, batchY, CLayers, HiddenLayers, smr);
                 // softmax update
                 smrWd2 = Momentum_d2 * smrWd2 + (1.0 - Momentum_d2) * smr.Wd2;

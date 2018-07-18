@@ -66,7 +66,9 @@ ConvNetInitPrarms(vector<Cvl> &ConvLayers, vector<Fcl> &HiddenLayers, Smr &smr, 
     // Init Hidden layers
     int outDim = imgDim;
     for(int i = 0; i < convConfig.size(); i++){
-        outDim = outDim - convConfig[i].KernelSize + 1;
+    	// CONV_VALID
+        // outDim = outDim - convConfig[i].KernelSize + 1;
+    	// CONV_SAME
         outDim = outDim / convConfig[i].PoolingDim;
     }
     int hiddenfeatures = pow(outDim, 2);

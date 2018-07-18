@@ -40,6 +40,7 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
         }else hidden.push_back(tmpacti);
         acti.push_back(tmpacti);
     }
+
     Mat M = smr.W * hidden[hidden.size() - 1] + repeat(smr.b, 1, nsamples);
     M -= repeat(reduce(M, 0, CV_REDUCE_MAX), M.rows, 1);
     M = exp(M);
@@ -149,6 +150,7 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
                 cpmap[upHstr] = upHessian;
             }
         }
+
         if(cl > 0){
             for(int k = 0; k < convConfig[cl - 1].KernelAmount; k ++){
                 vector<string> prevUD = getSpecKeys(nsamples, cl, cl - 1, k, KEY_UP_DELTA);
@@ -164,8 +166,8 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
                         cpmap[strh] = zero2;
                     }
                     int currentKernel = getCurrentKernelNum(prevUD[i]);
-                    cpmap.at(strd) += convCalc(cpmap.at(prevUD[i]), CLayers[cl].layer[currentKernel].W, CONV_FULL);
-                    cpmap.at(strh) += convCalc(cpmap.at(prevUH[i]), pow(CLayers[cl].layer[currentKernel].W, 2.0), CONV_FULL);
+                    cpmap.at(strd) += convCalc(cpmap.at(prevUD[i]), CLayers[cl].layer[currentKernel].W, CONV_SAME);
+                    cpmap.at(strh) += convCalc(cpmap.at(prevUH[i]), pow(CLayers[cl].layer[currentKernel].W, 2.0), CONV_SAME);
                 }
             }
         }
@@ -179,7 +181,9 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
                 Mat temp = rot90(cpmap.at(convKey[m]), 2);
                 if(cl == 0){
                     tpgradW += convCalc(x[getSampleNum(convKey[m])], temp, CONV_VALID);
-                }else{
+                }
+
+                else{
                     string strprev = getPreviousLayerKey(convKey[m], KEY_POOL);
                     tpgradW += convCalc(cpmap.at(strprev), temp, CONV_VALID);
                 }

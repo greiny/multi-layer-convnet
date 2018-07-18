@@ -99,88 +99,61 @@ readData(vector<Mat> &x, Mat &y, string xpath, string ypath, int number_of_image
 }
 
 void
-readImage(vector<Mat> &trainx, Mat &trainy,vector<Mat> &testx, Mat &testy){
+readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 
-	Mat trainY = Mat::zeros(1, 536+645+276, CV_64FC1);
-	Mat testY = Mat::zeros(1,200+76, CV_64FC1);
+	vector<Mat> dataO,dataX;
+	trainY = Mat::zeros(1, 845+338-300, CV_64FC1);
+	testY = Mat::zeros(1,200+100, CV_64FC1);
 
-	for ( int i=1 ; i <= 536 ; i++ )
+	for ( int i=1 ; i <= 845 ; i++ )
 	{
 		Mat buf;
 		char file_name[255];
-		sprintf(file_name,"image/correct (%d).jpg",i);
+		sprintf(file_name,"target/o/o(%d).png",i);
 		buf = imread(file_name,0);
-		resize(buf,buf,Size(28,28));
-		trainx.push_back(buf);
+		resize(buf,buf,Size(32,32));
+		dataO.push_back(buf);
+		buf.release();
+	}
+	random_shuffle(dataO.begin(), dataO.end());
+	for ( int i=0 ; i < dataO.size() ; i++ )
+	{
+		if (i<200) testX.push_back(dataO[i]);
+		else trainX.push_back(dataO[i]);
 	}
 
-	for ( int i=1 ; i <= 645 ; i++ )
+	for ( int i=1 ; i <= 338 ; i++ )
 	{
 		Mat buf;
 		char file_name[255];
-		sprintf(file_name,"image/img(%d).png",i);
+		sprintf(file_name,"target/x/x(%d).png",i);
 		buf = imread(file_name,0);
-		resize(buf,buf,Size(28,28));
-		Canny(buf, buf, 80, 160, 3);
-		trainx.push_back(buf);
+		resize(buf,buf,Size(32,32));
+		dataX.push_back(buf);
+		buf.release();
 	}
-
-	for ( int i=1 ; i <= 276 ; i++ )
+	random_shuffle(dataX.begin(), dataX.end());
+	for ( int i=0 ; i < dataX.size() ; i++ )
 	{
-		Mat buf;
-		char file_name[255];
-		sprintf(file_name,"image/basic_x (%d).png",i);
-		buf = imread(file_name,0);
-		resize(buf,buf,Size(28,28));
-		Canny(buf, buf, 80, 160, 3);
-		trainx.push_back(buf);
+		if (i<100) testX.push_back(dataX[i]);
+		else trainX.push_back(dataX[i]);
 	}
 
-	for(int j = 0; j < 536+645+276; j++){
+	for(int j = 0; j < 845+338-300; j++){
 		unsigned char temp = 1;
-		if (j<536+645) trainY.ATD(0, j) = (double)temp;
-		else trainY.ATD(0, j) = 0;
+		if (j<645) trainY.ATD(0, j) = (double)temp;
+			else trainY.ATD(0, j) = 0;
 	}
-
-
-	for ( int i=646 ; i <= 845 ; i++ )
-	{
-		Mat buf;
-		char file_name[255];
-		sprintf(file_name,"image/img(%d).png",i);
-		buf = imread(file_name,0);
-		resize(buf,buf,Size(28,28));
-		Canny(buf, buf, 80, 160, 3);
-		testx.push_back(buf);
-	}
-
-	for ( int i=1 ; i <= 76 ; i++ )
-	{
-		Mat buf;
-		char file_name[255];
-		sprintf(file_name,"image/incorrect (%d).jpg",i);
-		buf = imread(file_name,0);
-		resize(buf,buf,Size(28,28));
-		testx.push_back(buf);
-	}
-
-	for(int j = 0; j < 200+76; j++){
+	for(int j = 0; j < 200+100; j++){
 		unsigned char temp = 1;
-		if (j < 200) testY.ATD(0, j) = (double)temp;
-		else trainY.ATD(0, j) = 0;
+		if (j<200) testY.ATD(0, j) = (double)temp;
+			else testY.ATD(0, j) = 0;
 	}
+	for(int i = 0; i < trainX.size(); i++) trainX[i].convertTo(trainX[i], CV_64FC1, 1.0/255, 0);
+	for(int i = 0; i < testX.size(); i++) testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
 
-	for(int i = 0; i < trainx.size(); i++){
-		trainx[i].convertTo(trainx[i], CV_64FC1, 1.0/255, 0);
-	}
-	for(int i = 0; i < testx.size(); i++){
-		testx[i].convertTo(testx[i], CV_64FC1, 1.0/255, 0);
-	}
-
-	trainY.copyTo(trainy);
-	testY.copyTo(testy);
-	trainY.release();
-	testY.release();
+	dataO.clear();
+	dataX.clear();
 }
 
 

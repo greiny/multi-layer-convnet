@@ -260,7 +260,7 @@ convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers,
                 for(int k = 0; k < convConfig[cl].KernelAmount; k ++){
                     string s2 = s1 + "C0K" + i2str(k);
                     Mat temp = rot90(CLayers[cl].layer[k].W, 2);
-                    Mat tmpconv = convCalc(x[m], temp, CONV_VALID);
+                    Mat tmpconv = convCalc(x[m], temp, CONV_SAME);
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
                     map[s2] = tmpconv;
@@ -290,7 +290,7 @@ convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers,
                     for(int k = 0; k < convConfig[cl].KernelAmount; k ++){
                         string s2 = vec[tp] + "C" + i2str(cl) + "K" + i2str(k);
                         Mat temp = rot90(CLayers[cl].layer[k].W, 2);
-                        Mat tmpconv = convCalc(map.at(vec[tp]), temp, CONV_VALID);
+                        Mat tmpconv = convCalc(map.at(vec[tp]), temp, CONV_SAME);
                         tmpconv += CLayers[cl].layer[k].b;
                         tmpconv = nonLinearity(tmpconv);
                         map[s2] = tmpconv;
@@ -389,7 +389,7 @@ convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vector<M
                 for(int k = 0; k < convConfig[cl].KernelAmount; k++)
                 {
                     Mat temp = rot90(CLayers[cl].layer[k].W, 2);
-                    Mat tmpconv = convCalc(res[s][m], temp, CONV_VALID);
+                    Mat tmpconv = convCalc(res[s][m], temp, CONV_SAME);
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
                     tpvec[s].push_back(tmpconv);
@@ -443,8 +443,8 @@ convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vec
                 for(int k = 0; k < convConfig[cl].KernelAmount; k++)
                 {
                     Mat temp = rot90(CLayers[cl].layer[k].W, 2);
-                    Mat tmpconv = convCalc(res[s][m], temp, CONV_VALID);
-                    if (s%10 == 1) saveConvImage(s,k, tmpconv, "log/");
+                    Mat tmpconv = convCalc(res[s][m], temp, CONV_SAME);
+                    if (s%10 == 1) saveConvImage(cl,s,k, tmpconv, "log/");
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
                     tpvec[s].push_back(tmpconv);
