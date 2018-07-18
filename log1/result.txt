@@ -1,3 +1,0 @@
-Test with training data: correct: 5552, total: 5828, accuracy: 0.952642
-Test with testing data: correct: 235, total: 276, accuracy: 0.851449
-
