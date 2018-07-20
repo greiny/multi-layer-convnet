@@ -67,7 +67,11 @@ resultPredict4test(const vector<Mat> &x, const vector<Cvl> &CLayers, const vecto
     Mat result = Mat::zeros(1, M.cols, CV_64FC1);
 
     save2txt(hLayers[0].W,"log/","weight.txt");
+    save2txt(hLayers[0].b,"log/","weight_bias.txt");
+    save2txt(smr.W,"log/","smr.txt");
+    save2txt(smr.b,"log/","smr_bias.txt");
     saveConvKernel(CLayers, "log/");
+    saveConvKernelGradient(CLayers, "log/");
 
     double minValue, maxValue;
     Point minLoc, maxLoc;

@@ -27,6 +27,7 @@ run(){
     vector<Mat> testX;
     Mat trainY, testY;
     read_MNIST_data(trainX, testX, trainY, testY);
+
     int imgDim = trainX[0].rows;
     int nsamples = trainX.size();
 
@@ -41,8 +42,6 @@ run(){
     ConvNetInitPrarms(ConvLayers, HiddenLayers, smr, imgDim, nsamples);
     // Train network using Back Propogation
     trainNetwork(trainX, trainY, ConvLayers, HiddenLayers, smr, testX, testY);
-    save2txt(HiddenLayers[0].W,"log/","weight.txt");
-    saveConvKernel(ConvLayers, "log/");
     ConvLayers.clear();
     HiddenLayers.clear();
 

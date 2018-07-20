@@ -42,7 +42,7 @@ Pooling(const Mat &M, int pVert, int pHori, int poolingMethod, vector<Point> &lo
             if(POOL_MAX == poolingMethod){ 
                 double minVal = 0.0;
                 double maxVal = 0.0;
-                Point minLoc; 
+                Point minLoc;
                 Point maxLoc;
                 minMaxLoc( temp, &minVal, &maxVal, &minLoc, &maxLoc );
                 val = maxVal;
@@ -95,9 +95,9 @@ Pooling(const Mat &M, int pVert, int pHori, int poolingMethod){
             if(POOL_MAX == poolingMethod){ 
                 double minVal = 0.0;
                 double maxVal = 0.0;
-                Point minLoc; 
-                Point maxLoc;
-                minMaxLoc( temp, &minVal, &maxVal, &minLoc, &maxLoc );
+                Point minLoc(0,0);
+                Point maxLoc(0,0);
+                minMaxLoc( temp, &minVal, &maxVal, &minLoc, &maxLoc,noArray() );
                 val = maxVal;
             }elif(POOL_MEAN == poolingMethod){
                 // Mean Pooling

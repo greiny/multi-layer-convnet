@@ -38,7 +38,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
             hlWd2.push_back(tempWd2);
             hlbd2.push_back(tempbd2);
         }
-        
+
         vector<vector<Mat> > v_cvl_W;
         vector<vector<double> > v_cvl_b;
         vector<vector<Mat> > cvlWd2;
@@ -63,6 +63,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
             cvlWd2.push_back(tmpvecWd2);
             cvlbd2.push_back(tmpvecbd2);
         }
+
         double Momentum_w = 0.5;
         double Momentum_b = 0.5;
         double Momentum_d2 = 0.5;
@@ -78,6 +79,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 //$$LOG mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); $$_LOG
                 if(k > 30) {Momentum_w = 0.95; Momentum_b = 0.95; Momentum_d2 = 0.90;}
                 vector<Mat> batchX;
+
                 Mat batchY = Mat::zeros(y.rows, batch_size, CV_64FC1); 
                 getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);
                 cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;
@@ -119,7 +121,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 vector<Mat>().swap(batchX);
                 batchY.release();
                 //$$LOG saveConvKernel(CLayers, path); $$_LOG
-            } 
+            }
             if(! is_gradient_checking){
                 cout<<"Test with training data: ";
                 testNetwork(x, y, CLayers, HiddenLayers, smr);

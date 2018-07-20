@@ -17,11 +17,10 @@ void
 read_MNIST_data(vector<Mat> &trainX, vector<Mat> &testX, Mat &trainY, Mat &testY){
     
 
-	//readImage(trainX, trainY,trainX, trainY);
+	readImage(trainX, trainY,testX, testY);
     //readData(trainX, trainY, "mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte", 60000);
     //readData(testX, testY, "mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte", 10000);
-    readImage(trainX,trainY,testX,testY);
-
+    //readcsv(trainX,trainY,testX,testY);
     preProcessing(trainX, testX);
     dataEnlarge(trainX, trainY);
 
@@ -99,8 +98,137 @@ readData(vector<Mat> &x, Mat &y, string xpath, string ypath, int number_of_image
 }
 
 void
-readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
+readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
+{
+	vector<double*> data;
+	//open file for reading
+	fstream inputFile;
+	inputFile.open("final_example.csv", ios::in);
 
+	if ( inputFile.is_open() )
+	{
+		string line = "";
+		while ( !inputFile.eof() )
+		{
+			getline(inputFile, line);
+			if (line.length() > 2 )
+			{
+				//store inputs
+				char* cstr = new char[line.size()+1];
+				char* t;
+				strcpy(cstr, line.c_str());
+
+				//tokenise
+				int i = 0;
+				t=strtok (cstr,",");
+				double* dat = new double[(int)2];
+				while ( t!=NULL && i < 2 ) // image_name and steering angle
+				{
+					if ( i < 1 ) dat[0] = atof(t);
+					else dat[1] = atof(t);
+					//move token onwards
+					t = strtok(NULL,",");
+					i++;
+				}
+				data.push_back(dat);
+				//free memory
+				delete[] cstr;
+			}
+		}
+		cout << "Read Complete: " << data.size() << " Patterns Loaded"  << endl;
+		inputFile.close();
+	}
+	else cout << endl << "Error - input file could not be opened: " << endl;
+	random_shuffle(data.begin(), data.end());
+
+	//set steering angle
+	vector<Mat> img; img.reserve(data.size());
+	vector<double> strangle; strangle.reserve(data.size());
+	for (int k=0; k < data.size(); k++ )
+	{
+		char file_name[255];
+		int file_no = 0;
+		sprintf(file_name,"center/(%.0f).jpg",data[k][0]);	
+		Mat buf;
+		buf = imread(file_name);
+		resize(buf,buf,Size(),0.5,0.5);
+		buf.convertTo(buf, CV_64FC1, 1.0/255, 0);
+		if (k<(int)(data.size()*0.7)) trainX.push_back(buf);
+		else testX.push_back(buf);
+		strangle.push_back(data[k][1]);
+		buf.release();
+	}
+	for (int k=0; k < data.size(); k++ ) delete[] data[k];
+	data.clear();
+
+	trainY = Mat::zeros(7, trainX.size(), CV_64FC1);
+	testY = Mat::zeros(7,testX.size(), CV_64FC1);
+	for(int i = 0; i < trainX.size()+testX.size(); i++){
+		double temp = 1;
+		if (i<trainX.size()) {
+			if (strangle[i] > 0.3) trainY.ATD(0, i) = temp;
+			else if (0.15 < strangle[i] && strangle[i]< 0.3) trainY.ATD(1, i) = temp;
+			else if (0.05 < strangle[i] && strangle[i]< 0.15) trainY.ATD(2, i) = temp;
+			else if (-0.05 < strangle[i] && strangle[i] < 0.05) trainY.ATD(3, i) = temp;
+			else if (-0.15 < strangle[i] && strangle[i] < -0.05) trainY.ATD(4, i) = temp;
+			else if (-0.3 < strangle[i] && strangle[i] < -0.15) trainY.ATD(5, i) = temp;
+			else if (strangle[i] < -0.3 ) trainY.ATD(6, i) = temp;
+		}
+		else{
+			if (strangle[i] > 0.3) trainY.ATD(0, (i-trainX.size())) = temp;
+			else if (0.15 < strangle[i] && strangle[i] < 0.3) trainY.ATD(1, (i-trainX.size())) = temp;
+			else if (0.05 < strangle[i] && strangle[i] < 0.15) trainY.ATD(2, (i-trainX.size())) = temp;
+			else if (-0.05 < strangle[i] && strangle[i] < 0.05) trainY.ATD(3, (i-trainX.size())) = temp;
+			else if (-0.15 < strangle[i] && strangle[i] < -0.05) trainY.ATD(4, (i-trainX.size())) = temp;
+			else if (-0.3 < strangle[i] && strangle[i] < -0.15) trainY.ATD(5, (i-trainX.size())) = temp;
+			else if (strangle[i] < -0.3 ) trainY.ATD(6, (i-trainX.size())) = temp;
+		}
+	}
+	strangle.clear();
+}
+
+void
+readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
+	vector<Mat> dataO,dataX;
+	for ( int i=1 ; i <= 1486 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"test/correct/correct(%d).png",i);
+		buf = imread(file_name,0);
+		dataO.push_back(buf);
+		buf.release();
+	}
+	for ( int i=0 ; i < dataO.size() ; i++ )
+	{
+		if (i<(int)(dataO.size()*0.7)) trainX.push_back(dataO[i]);
+		else testX.push_back(dataO[i]);
+	}
+	for ( int i=0 ; i <= 1665 ; i++ )
+	{
+		Mat buf;
+		char file_name[255];
+		sprintf(file_name,"test/incorrect/incorrect(%d).png",i);
+		buf = imread(file_name,0);
+		dataX.push_back(buf);
+		buf.release();
+	}
+	for ( int i=0 ; i < dataX.size() ; i++ )
+	{
+		if (i<(int)(dataX.size()*0.7)) trainX.push_back(dataX[i]);
+		else testX.push_back(dataX[i]);
+	}
+
+	trainY = Mat::zeros(1, trainX.size(), CV_64FC1);
+	testY = Mat::zeros(1,testX.size(), CV_64FC1);
+	for(int j = 0; j < trainX.size(); j++)
+		if (j<(int)(dataO.size()*0.7)) trainY.ATD(0, j) = (double)1;
+	for(int j = 0; j < testX.size(); j++)
+		if (j<(int)(dataO.size()*0.3)) testY.ATD(0, j) = (double)1;
+
+	dataO.clear();
+	dataX.clear();
+/*
 	vector<Mat> dataO,dataX;
 	trainY = Mat::zeros(1, 845+338-300, CV_64FC1);
 	testY = Mat::zeros(1,200+100, CV_64FC1);
@@ -153,13 +281,12 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 	for(int i = 0; i < testX.size(); i++) testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
 
 	dataO.clear();
-	dataX.clear();
+	dataX.clear();*/
 }
 
 
 Mat 
 concat(const vector<Mat> &vec){
-    
     int height = vec[0].rows * vec[0].cols;
     int width = vec.size();
     Mat res = Mat::zeros(height, width, CV_64FC1);
@@ -174,19 +301,19 @@ concat(const vector<Mat> &vec){
 
 void
 preProcessing(vector<Mat> &trainX, vector<Mat> &testX){
-    /*
+
     for(int i = 0; i < trainX.size(); i++){
         trainX[i].convertTo(trainX[i], CV_64FC1, 1.0/255, 0);
     }
     for(int i = 0; i < testX.size(); i++){
         testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
     }
-    */
+
     // first convert vec of mat into a single mat
     Mat tmp = concat(trainX);
     Mat tmp2 = concat(testX);
     Mat alldata = Mat::zeros(tmp.rows, tmp.cols + tmp2.cols, CV_64FC1);
-    
+
     tmp.copyTo(alldata(Rect(0, 0, tmp.cols, tmp.rows)));
     tmp2.copyTo(alldata(Rect(tmp.cols, 0, tmp2.cols, tmp.rows)));
 
