@@ -356,7 +356,10 @@ hashDelta(const Mat &src, unordered_map<string, Mat> &map, int layersize, int ty
             }
         }
         int sqDim = src.rows / vecstr.size();
-        int Dim = sqrt(sqDim);
+        int Dim = 0;
+        if ((sqDim%12 != 0) && (sqrt(sqDim)!=(int)sqrt(sqDim))) cout << "!!image size not matched!! Plz check convolution.cc" << endl;
+        else if (sqrt(sqDim)==(int)sqrt(sqDim)) Dim = (int)sqrt(sqDim);
+		else if (sqDim%12 == 0) Dim = (int)(3*sqrt(sqDim/12));
         for(int i = 0; i < vecstr.size(); i++){
             Rect roi = Rect(m, i * sqDim, 1, sqDim);
             Mat temp;
@@ -437,14 +440,17 @@ convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vec
             tpvec[i].clear();
         }
         int pdim = convConfig[cl].PoolingDim;
-
+        int mod = (int)(nsamples/10);
         for(int s = 0; s < nsamples; s++){
             for(int m = 0; m < res[s].size(); m++){
                 for(int k = 0; k < convConfig[cl].KernelAmount; k++)
                 {
                     Mat temp = rot90(CLayers[cl].layer[k].W, 2);
                     Mat tmpconv = convCalc(res[s][m], temp, CONV_SAME);
-                    if (s%10 == 1) saveConvImage(cl,s,k, tmpconv, "log/");
+                    if (s%mod == 1) {
+                    	saveOriginImage(cl,s,k, res[s][m], "log/");
+                    	saveConvImage(cl,s,k, tmpconv, "log/");
+                    }
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
                     tpvec[s].push_back(tmpconv);

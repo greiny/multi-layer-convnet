@@ -12,14 +12,15 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
     unordered_map<string, Mat> cpmap;
     unordered_map<string, vector<Point> > locmap;
     convAndPooling(x, CLayers, cpmap, locmap);
+
     vector<Mat> P;
     vector<string> vecstr = getLayerKey(nsamples, CLayers.size() - 1, KEY_POOL);
     for(int i = 0; i<vecstr.size(); i++){
         P.push_back(cpmap.at(vecstr[i]));
     }
+
     Mat convolvedX = concatenateMat(P, nsamples);
     P.clear();
-
     // full connected layers
     vector<Mat> nonlin;
     vector<Mat> hidden;
@@ -28,10 +29,10 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
     hidden.push_back(convolvedX);
     acti.push_back(convolvedX);
     vector<Mat> bernoulli;
-    for(int i = 1; i <= fcConfig.size(); i++){
+    for(int i = 1; i <= fcConfig.size(); i++){ // convolvedX.cols->#dataset
         Mat tmpacti = hLayers[i - 1].W * hidden[i - 1] + repeat(hLayers[i - 1].b, 1, convolvedX.cols);
         nonlin.push_back(tmpacti);
-//        tmpacti = sigmoid(tmpacti);
+//      tmpacti = sigmoid(tmpacti);
         tmpacti = ReLU(tmpacti);
         if(fcConfig[i - 1].DropoutRate < 1.0){
             Mat bnl = getBernoulliMatrix(tmpacti.rows, tmpacti.cols, fcConfig[i - 1].DropoutRate);
@@ -40,7 +41,6 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
         }else hidden.push_back(tmpacti);
         acti.push_back(tmpacti);
     }
-
     Mat M = smr.W * hidden[hidden.size() - 1] + repeat(smr.b, 1, nsamples);
     M -= repeat(reduce(M, 0, CV_REDUCE_MAX), M.rows, 1);
     M = exp(M);
@@ -71,6 +71,7 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
     smr.Wd2 = pow((groundTruth - p), 2.0) * pow(hidden[hidden.size() - 1].t(), 2.0);
     smr.Wd2 = smr.Wd2 / nsamples + softmaxConfig.WeightDecay;
     smr.bd2 = reduce(pow((groundTruth - p), 2.0), 1, CV_REDUCE_SUM) / nsamples;
+
     // bp - full connected
     vector<Mat> delta(hidden.size());
     vector<Mat> deltad2(hidden.size());
@@ -109,6 +110,7 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
         hLayers[i].Wd2 = deltad2[i + 1] * pow((hidden[i]).t(), 2.0) / nsamples + fcConfig[i].WeightDecay;
         hLayers[i].bd2 = reduce(deltad2[i + 1], 1, CV_REDUCE_SUM) / nsamples;
     }
+
     //bp - Conv layer
     hashDelta(delta[0], cpmap, CLayers.size(), HASH_DELTA);
     hashDelta(deltad2[0], cpmap, CLayers.size(), HASH_HESSIAN);

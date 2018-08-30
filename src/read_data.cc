@@ -15,14 +15,14 @@ ReverseInt (int i){
 
 void
 read_MNIST_data(vector<Mat> &trainX, vector<Mat> &testX, Mat &trainY, Mat &testY){
-    
 
-	readImage(trainX, trainY,testX, testY);
+
+	//readImage(trainX, trainY,testX, testY);
     //readData(trainX, trainY, "mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte", 60000);
     //readData(testX, testY, "mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte", 10000);
-    //readcsv(trainX,trainY,testX,testY);
-    preProcessing(trainX, testX);
-    dataEnlarge(trainX, trainY);
+    readcsv(trainX,trainY,testX,testY);
+   // preProcessing(trainX, testX);
+    //dataEnlarge(trainX, trainY);
 
     cout<<"****************************************************************************"<<endl
         <<"**                        READ DATASET COMPLETE                             "<<endl
@@ -139,49 +139,66 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 		inputFile.close();
 	}
 	else cout << endl << "Error - input file could not be opened: " << endl;
-	random_shuffle(data.begin(), data.end());
-
+#if 0
 	//set steering angle
-	vector<Mat> img; img.reserve(data.size());
-	vector<double> strangle; strangle.reserve(data.size());
+	Mat prev = imread("center/(1).jpg",0);
+	resize(prev,prev,Size(),0.25,0.25);;
 	for (int k=0; k < data.size(); k++ )
 	{
 		char file_name[255];
-		int file_no = 0;
-		sprintf(file_name,"center/(%.0f).jpg",data[k][0]);	
-		Mat buf;
-		buf = imread(file_name);
-		resize(buf,buf,Size(),0.5,0.5);
+		sprintf(file_name,"center/(%.0f).jpg",(float)data[k][0]);
+		Mat next = imread(file_name,0);
+		resize(next,next,Size(),0.25,0.25);
+		Mat buf = next-prev;
+		sprintf(file_name,"proc/(%.0f).jpg",(float)(k+1));
+		imwrite(file_name,buf);
+		//calcOpticalFlowFarneback(prev, next, none, 0.5, 3, 15, 3, 5, 1.2, 0);
+		next.copyTo(prev);
+		next.release();
+		buf.release();
+	}
+	prev.release();
+#endif
+	random_shuffle(data.begin(), data.end());
+	vector<double> strangle; strangle.reserve(data.size()-1);
+	for (int k=0; k < data.size(); k++ )
+	{
+		if (data[k][0]==1) continue;
+		char file_name[255];
+		sprintf(file_name,"proc/(%.0f).jpg",(float)data[k][0]);
+		Mat buf = imread(file_name,0);
 		buf.convertTo(buf, CV_64FC1, 1.0/255, 0);
 		if (k<(int)(data.size()*0.7)) trainX.push_back(buf);
-		else testX.push_back(buf);
+			else testX.push_back(buf);
 		strangle.push_back(data[k][1]);
 		buf.release();
 	}
 	for (int k=0; k < data.size(); k++ ) delete[] data[k];
 	data.clear();
 
-	trainY = Mat::zeros(7, trainX.size(), CV_64FC1);
-	testY = Mat::zeros(7,testX.size(), CV_64FC1);
+	trainY = Mat::zeros(8, trainX.size(), CV_64FC1);
+	testY = Mat::zeros(8,testX.size(), CV_64FC1);
 	for(int i = 0; i < trainX.size()+testX.size(); i++){
 		double temp = 1;
 		if (i<trainX.size()) {
-			if (strangle[i] > 0.3) trainY.ATD(0, i) = temp;
-			else if (0.15 < strangle[i] && strangle[i]< 0.3) trainY.ATD(1, i) = temp;
-			else if (0.05 < strangle[i] && strangle[i]< 0.15) trainY.ATD(2, i) = temp;
-			else if (-0.05 < strangle[i] && strangle[i] < 0.05) trainY.ATD(3, i) = temp;
-			else if (-0.15 < strangle[i] && strangle[i] < -0.05) trainY.ATD(4, i) = temp;
-			else if (-0.3 < strangle[i] && strangle[i] < -0.15) trainY.ATD(5, i) = temp;
-			else if (strangle[i] < -0.3 ) trainY.ATD(6, i) = temp;
+			if (strangle[i] > 0.1) trainY.ATD(0, i) = temp;
+			else if (0.05 < strangle[i] && strangle[i]< 0.1) trainY.ATD(1, i) = temp;
+			else if (0.02 < strangle[i] && strangle[i]< 0.05) trainY.ATD(2, i) = temp;
+			else if (0 < strangle[i] && strangle[i] < 0.02) trainY.ATD(3, i) = temp;
+			else if (-0.02 < strangle[i] && strangle[i] < 0) trainY.ATD(4, i) = temp;
+			else if (-0.05 < strangle[i] && strangle[i] < -0.02) trainY.ATD(5, i) = temp;
+			else if (-0.1 < strangle[i] && strangle[i] < -0.05) trainY.ATD(6, i) = temp;
+			else if (strangle[i] < -0.1 ) trainY.ATD(7, i) = temp;
 		}
 		else{
-			if (strangle[i] > 0.3) trainY.ATD(0, (i-trainX.size())) = temp;
-			else if (0.15 < strangle[i] && strangle[i] < 0.3) trainY.ATD(1, (i-trainX.size())) = temp;
-			else if (0.05 < strangle[i] && strangle[i] < 0.15) trainY.ATD(2, (i-trainX.size())) = temp;
-			else if (-0.05 < strangle[i] && strangle[i] < 0.05) trainY.ATD(3, (i-trainX.size())) = temp;
-			else if (-0.15 < strangle[i] && strangle[i] < -0.05) trainY.ATD(4, (i-trainX.size())) = temp;
-			else if (-0.3 < strangle[i] && strangle[i] < -0.15) trainY.ATD(5, (i-trainX.size())) = temp;
-			else if (strangle[i] < -0.3 ) trainY.ATD(6, (i-trainX.size())) = temp;
+			if (strangle[i] > 0.1) trainY.ATD(0, (i-trainX.size())) = temp;
+			else if (0.05 < strangle[i] && strangle[i]< 0.1) trainY.ATD(1, (i-trainX.size())) = temp;
+			else if (0.02 < strangle[i] && strangle[i]< 0.05) trainY.ATD(2, (i-trainX.size())) = temp;
+			else if (0 < strangle[i] && strangle[i] < 0.02) trainY.ATD(3, (i-trainX.size())) = temp;
+			else if (-0.02 < strangle[i] && strangle[i] < 0) trainY.ATD(4, (i-trainX.size())) = temp;
+			else if (-0.05 < strangle[i] && strangle[i] < -0.02) trainY.ATD(5, (i-trainX.size())) = temp;
+			else if (-0.1 < strangle[i] && strangle[i] < -0.05) trainY.ATD(6, (i-trainX.size())) = temp;
+			else if (strangle[i] < -0.1 ) trainY.ATD(7, (i-trainX.size())) = temp;
 		}
 	}
 	strangle.clear();
@@ -189,13 +206,15 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 
 void
 readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
-	vector<Mat> dataO,dataX;
+	/*vector<Mat> dataO,dataX;
 	for ( int i=1 ; i <= 1486 ; i++ )
 	{
 		Mat buf;
 		char file_name[255];
 		sprintf(file_name,"test/correct/correct(%d).png",i);
 		buf = imread(file_name,0);
+		Mat kk = Mat::ones(6, 6, CV_8UC1);
+		erode(buf, buf, kk);
 		dataO.push_back(buf);
 		buf.release();
 	}
@@ -210,6 +229,8 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		char file_name[255];
 		sprintf(file_name,"test/incorrect/incorrect(%d).png",i);
 		buf = imread(file_name,0);
+		Mat kk = Mat::ones(6, 6, CV_8UC1);
+		erode(buf, buf, kk);
 		dataX.push_back(buf);
 		buf.release();
 	}
@@ -227,8 +248,8 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		if (j<(int)(dataO.size()*0.3)) testY.ATD(0, j) = (double)1;
 
 	dataO.clear();
-	dataX.clear();
-/*
+	dataX.clear();*/
+
 	vector<Mat> dataO,dataX;
 	trainY = Mat::zeros(1, 845+338-300, CV_64FC1);
 	testY = Mat::zeros(1,200+100, CV_64FC1);
@@ -277,11 +298,11 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		if (j<200) testY.ATD(0, j) = (double)temp;
 			else testY.ATD(0, j) = 0;
 	}
-	for(int i = 0; i < trainX.size(); i++) trainX[i].convertTo(trainX[i], CV_64FC1, 1.0/255, 0);
-	for(int i = 0; i < testX.size(); i++) testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
+	//for(int i = 0; i < trainX.size(); i++) trainX[i].convertTo(trainX[i], CV_64FC1, 1.0/255, 0);
+	//for(int i = 0; i < testX.size(); i++) testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
 
 	dataO.clear();
-	dataX.clear();*/
+	dataX.clear();
 }
 
 

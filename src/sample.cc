@@ -28,7 +28,7 @@ run(){
     Mat trainY, testY;
     read_MNIST_data(trainX, testX, trainY, testY);
 
-    int imgDim = trainX[0].rows;
+    int imgDim = trainX[0].rows*trainX[0].cols;
     int nsamples = trainX.size();
 
     for(int i = 0; i < nsamples; i++){

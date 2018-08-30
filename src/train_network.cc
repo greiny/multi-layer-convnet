@@ -79,11 +79,11 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 //$$LOG mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); $$_LOG
                 if(k > 30) {Momentum_w = 0.95; Momentum_b = 0.95; Momentum_d2 = 0.90;}
                 vector<Mat> batchX;
-
                 Mat batchY = Mat::zeros(y.rows, batch_size, CV_64FC1); 
                 getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);
                 cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;
                 getNetworkCost(batchX, batchY, CLayers, HiddenLayers, smr);
+
                 // softmax update
                 smrWd2 = Momentum_d2 * smrWd2 + (1.0 - Momentum_d2) * smr.Wd2;
                 smrbd2 = Momentum_d2 * smrbd2 + (1.0 - Momentum_d2) * smr.bd2;
@@ -93,6 +93,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 v_smr_b = v_smr_b * Momentum_b + (1.0 - Momentum_b) * smr.bgrad.mul(lr_b);
                 smr.W -= v_smr_W;
                 smr.b -= v_smr_b;
+
                 // full-connected layer update
                 for(int i = 0; i < HiddenLayers.size(); i++){
                     hlWd2[i] = Momentum_d2 * hlWd2[i] + (1.0 - Momentum_d2) * HiddenLayers[i].Wd2;
@@ -104,6 +105,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                     HiddenLayers[i].W -= v_hl_W[i];
                     HiddenLayers[i].b -= v_hl_b[i];
                 }
+
                 // convolutional layer update
                 for(int cl = 0; cl < CLayers.size(); cl++){
                     for(int i = 0; i < convConfig[cl].KernelAmount; i++){
@@ -117,6 +119,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                         CLayers[cl].layer[i].b -= v_cvl_b[cl][i];
                     }
                 }
+
                 batchX.clear();
                 vector<Mat>().swap(batchX);
                 batchY.release();
