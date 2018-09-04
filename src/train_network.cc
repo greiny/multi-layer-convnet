@@ -72,6 +72,11 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
         double lr_b_s;
         double mu = 1e-2;
         int k = 0;
+
+        vector<Mat> imgset;
+        imgset.push_back(x[150]);
+//	imgset.push_back(x[1200]);
+
         for(int epo = 1; epo <= training_epochs; epo++){
             for(; k <= iter_per_epo * epo; k++){
                 log_iter = k;
@@ -83,6 +88,7 @@ trainNetwork(const vector<Mat> &x, const Mat &y, vector<Cvl> &CLayers, vector<Fc
                 getSample(x, &batchX, y, &batchY, batch_size, SAMPLE_COLS);
                 cout<<"epoch: "<<epo<<", iter: "<<k;//<<endl;
                 getNetworkCost(batchX, batchY, CLayers, HiddenLayers, smr);
+                convAndPooling4Video(imgset, CLayers);
 
                 // softmax update
                 smrWd2 = Momentum_d2 * smrWd2 + (1.0 - Momentum_d2) * smr.Wd2;

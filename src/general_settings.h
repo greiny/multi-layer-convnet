@@ -80,3 +80,4 @@ extern int training_epochs;
 extern double lrate_w;
 extern double lrate_b;
 extern int iter_per_epo;
+

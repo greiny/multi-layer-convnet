@@ -48,7 +48,8 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
 
     Mat groundTruth = Mat::zeros(softmaxConfig.NumClasses, nsamples, CV_64FC1);
     for(int i = 0; i < nsamples; i++){
-        groundTruth.ATD(y.ATD(0, i), i) = 1.0;
+        //groundTruth.ATD(y.ATD(0, i), i) = 1.0; // y.ATD(0, i)-> class
+        groundTruth = y;
     }
     double J1 = - sum1(groundTruth.mul(log(p))) / nsamples;
     double J2 = sum1(pow(smr.W, 2.0)) * softmaxConfig.WeightDecay / 2;

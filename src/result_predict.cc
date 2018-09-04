@@ -164,7 +164,7 @@ testNetwork4test(const vector<Mat> &testX, const Mat &testY, const vector<Cvl> &
         for(int j = 0; j < testX.size() % batchSize; j++){
             tmpBatch.push_back(testX[batch_amount * batchSize + j]);
         }
-        Mat resultBatch = resultPredict(tmpBatch, CLayers, hLayers, smr);
+        Mat resultBatch = resultPredict4test(tmpBatch, CLayers, hLayers, smr);
         Rect roi = Rect(batch_amount * batchSize, 0, testX.size() % batchSize, testY.rows);
         resultBatch.copyTo(result(roi));
         ++ batch_amount;

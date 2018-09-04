@@ -17,12 +17,12 @@ void
 read_MNIST_data(vector<Mat> &trainX, vector<Mat> &testX, Mat &trainY, Mat &testY){
 
 
-	//readImage(trainX, trainY,testX, testY);
+	readImage(trainX, trainY,testX, testY);
     //readData(trainX, trainY, "mnist/train-images-idx3-ubyte", "mnist/train-labels-idx1-ubyte", 60000);
     //readData(testX, testY, "mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte", 10000);
-    readcsv(trainX,trainY,testX,testY);
-   // preProcessing(trainX, testX);
-    //dataEnlarge(trainX, trainY);
+    //readcsv(trainX,trainY,testX,testY);
+    preProcessing(trainX, testX);
+    dataEnlarge(trainX, trainY);
 
     cout<<"****************************************************************************"<<endl
         <<"**                        READ DATASET COMPLETE                             "<<endl
@@ -139,16 +139,18 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 		inputFile.close();
 	}
 	else cout << endl << "Error - input file could not be opened: " << endl;
-#if 0
+#if 1
 	//set steering angle
 	Mat prev = imread("center/(1).jpg",0);
-	resize(prev,prev,Size(),0.25,0.25);;
+	equalizeHist(prev,prev);
+	resize(prev,prev,Size(),0.5,0.5);
 	for (int k=0; k < data.size(); k++ )
 	{
 		char file_name[255];
 		sprintf(file_name,"center/(%.0f).jpg",(float)data[k][0]);
 		Mat next = imread(file_name,0);
-		resize(next,next,Size(),0.25,0.25);
+		resize(next,next,Size(),0.5,0.5);
+		equalizeHist(next,next);
 		Mat buf = next-prev;
 		sprintf(file_name,"proc/(%.0f).jpg",(float)(k+1));
 		imwrite(file_name,buf);
@@ -168,7 +170,7 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 		sprintf(file_name,"proc/(%.0f).jpg",(float)data[k][0]);
 		Mat buf = imread(file_name,0);
 		buf.convertTo(buf, CV_64FC1, 1.0/255, 0);
-		if (k<(int)(data.size()*0.7)) trainX.push_back(buf);
+		if (k<(int)(data.size()*0.8)) trainX.push_back(buf);
 			else testX.push_back(buf);
 		strangle.push_back(data[k][1]);
 		buf.release();
@@ -191,14 +193,14 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 			else if (strangle[i] < -0.1 ) trainY.ATD(7, i) = temp;
 		}
 		else{
-			if (strangle[i] > 0.1) trainY.ATD(0, (i-trainX.size())) = temp;
-			else if (0.05 < strangle[i] && strangle[i]< 0.1) trainY.ATD(1, (i-trainX.size())) = temp;
-			else if (0.02 < strangle[i] && strangle[i]< 0.05) trainY.ATD(2, (i-trainX.size())) = temp;
-			else if (0 < strangle[i] && strangle[i] < 0.02) trainY.ATD(3, (i-trainX.size())) = temp;
-			else if (-0.02 < strangle[i] && strangle[i] < 0) trainY.ATD(4, (i-trainX.size())) = temp;
-			else if (-0.05 < strangle[i] && strangle[i] < -0.02) trainY.ATD(5, (i-trainX.size())) = temp;
-			else if (-0.1 < strangle[i] && strangle[i] < -0.05) trainY.ATD(6, (i-trainX.size())) = temp;
-			else if (strangle[i] < -0.1 ) trainY.ATD(7, (i-trainX.size())) = temp;
+			if (strangle[i] > 0.1) testY.ATD(0, (i-trainX.size())) = temp;
+			else if (0.05 < strangle[i] && strangle[i]< 0.1) testY.ATD(1, (i-trainX.size())) = temp;
+			else if (0.02 < strangle[i] && strangle[i]< 0.05) testY.ATD(2, (i-trainX.size())) = temp;
+			else if (0 < strangle[i] && strangle[i] < 0.02) testY.ATD(3, (i-trainX.size())) = temp;
+			else if (-0.02 < strangle[i] && strangle[i] < 0) testY.ATD(4, (i-trainX.size())) = temp;
+			else if (-0.05 < strangle[i] && strangle[i] < -0.02) testY.ATD(5, (i-trainX.size())) = temp;
+			else if (-0.1 < strangle[i] && strangle[i] < -0.05) testY.ATD(6, (i-trainX.size())) = temp;
+			else if (strangle[i] < -0.1 ) testY.ATD(7, (i-trainX.size())) = temp;
 		}
 	}
 	strangle.clear();
@@ -206,7 +208,7 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 
 void
 readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
-	/*vector<Mat> dataO,dataX;
+	vector<Mat> dataO,dataX;
 	for ( int i=1 ; i <= 1486 ; i++ )
 	{
 		Mat buf;
@@ -240,19 +242,22 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		else testX.push_back(dataX[i]);
 	}
 
-	trainY = Mat::zeros(1, trainX.size(), CV_64FC1);
-	testY = Mat::zeros(1,testX.size(), CV_64FC1);
-	for(int j = 0; j < trainX.size(); j++)
+	trainY = Mat::zeros(2, trainX.size(), CV_64FC1);
+	testY = Mat::zeros(2,testX.size(), CV_64FC1);
+	for(int j = 0; j < trainX.size(); j++){
 		if (j<(int)(dataO.size()*0.7)) trainY.ATD(0, j) = (double)1;
-	for(int j = 0; j < testX.size(); j++)
+		else trainY.ATD(1, j) = (double)1;
+	}
+	for(int j = 0; j < testX.size(); j++){
 		if (j<(int)(dataO.size()*0.3)) testY.ATD(0, j) = (double)1;
-
+		else testY.ATD(1, j) = (double)1;
+	}
 	dataO.clear();
-	dataX.clear();*/
+	dataX.clear();
 
-	vector<Mat> dataO,dataX;
-	trainY = Mat::zeros(1, 845+338-300, CV_64FC1);
-	testY = Mat::zeros(1,200+100, CV_64FC1);
+	/*vector<Mat> dataO,dataX;
+	trainY = Mat::zeros(2, 845+338-300, CV_64FC1);
+	testY = Mat::zeros(2,200+100, CV_64FC1);
 
 	for ( int i=1 ; i <= 845 ; i++ )
 	{
@@ -260,7 +265,7 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		char file_name[255];
 		sprintf(file_name,"target/o/o(%d).png",i);
 		buf = imread(file_name,0);
-		resize(buf,buf,Size(32,32));
+		//resize(buf,buf,Size(32,32));
 		dataO.push_back(buf);
 		buf.release();
 	}
@@ -277,7 +282,7 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 		char file_name[255];
 		sprintf(file_name,"target/x/x(%d).png",i);
 		buf = imread(file_name,0);
-		resize(buf,buf,Size(32,32));
+		//resize(buf,buf,Size(32,32));
 		dataX.push_back(buf);
 		buf.release();
 	}
@@ -291,18 +296,18 @@ readImage(vector<Mat> &trainX, Mat &trainY,vector<Mat> &testX, Mat &testY){
 	for(int j = 0; j < 845+338-300; j++){
 		unsigned char temp = 1;
 		if (j<645) trainY.ATD(0, j) = (double)temp;
-			else trainY.ATD(0, j) = 0;
+			else trainY.ATD(1, j) = (double)temp;
 	}
 	for(int j = 0; j < 200+100; j++){
 		unsigned char temp = 1;
 		if (j<200) testY.ATD(0, j) = (double)temp;
-			else testY.ATD(0, j) = 0;
+			else testY.ATD(1, j) = (double)temp;
 	}
 	//for(int i = 0; i < trainX.size(); i++) trainX[i].convertTo(trainX[i], CV_64FC1, 1.0/255, 0);
 	//for(int i = 0; i < testX.size(); i++) testX[i].convertTo(testX[i], CV_64FC1, 1.0/255, 0);
 
 	dataO.clear();
-	dataX.clear();
+	dataX.clear();*/
 }
 
 

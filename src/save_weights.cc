@@ -70,14 +70,14 @@ saveConvKernel(const vector<Cvl> &CLayers, string path){
             mkdir(str2.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             str2 += "/";
             save2txt(CLayers[i].layer[j].W, str2, "kernel.csv");
-            save2txt3ch(CLayers[i].layer[j].W, str2, "kernel");
-        	char file_name[255];
-        	sprintf(file_name,"log/layer_%d/kernel_%d/ch_0.png",i,j);
-        	Mat buf;
-        	normalize(CLayers[i].layer[j].W,buf, 0,255,NORM_MINMAX, CV_8U);
-        	cvtColor(buf,buf,COLOR_GRAY2BGR);
-        	imwrite(file_name,buf);
-        	buf.release();
+            //save2txt3ch(CLayers[i].layer[j].W, str2, "kernel");
+		char file_name[255];
+		sprintf(file_name,"log/layer_%d/kernel_%d/ch_0.png",i,j);
+		Mat buf;
+		normalize(CLayers[i].layer[j].W,buf, 0,255,NORM_MINMAX, CV_8U);
+		cvtColor(buf,buf,COLOR_GRAY2BGR);
+		imwrite(file_name,buf);
+		buf.release();
         }
     }
 }

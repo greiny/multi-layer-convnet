@@ -28,3 +28,5 @@ void convAndPooling(const vector<Mat> &, const vector<Cvl> &,
 void hashDelta(const Mat &, unordered_map<string, Mat> &, int , int );
 void convAndPooling(const vector<Mat> &, const vector<Cvl> &, vector<vector<Mat> > &);
 void convAndPooling4Test(const vector<Mat> &, const vector<Cvl> &, vector<vector<Mat> > &);
+void convAndPooling4Video(const vector<Mat> &, const vector<Cvl> &);
+Mat img_reshape(vector<Mat> &, Size , Size );

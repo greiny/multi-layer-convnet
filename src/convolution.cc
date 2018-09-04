@@ -1,6 +1,5 @@
 #include "convolution.h"
 
-
 Point
 findLoc(const Mat &prob, int m){
     Mat temp, idx;
@@ -244,6 +243,7 @@ dlocalResponseNorm(const unordered_map<string, Mat> &map, string str){
     return res;
 }
 
+
 void 
 convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers, 
                 unordered_map<string, Mat> &map, 
@@ -424,24 +424,33 @@ convAndPooling(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vector<M
     tpvec.clear();
 }
 
+VideoWriter video("log2/convolved_img.avi",CV_FOURCC('M','J','P','G'),60, Size(64*2,64*2),true);
+VideoWriter video1("log2/kernel_layer1.avi",CV_FOURCC('M','J','P','G'),60, Size(64*3,64),true);
+VideoWriter video2("log2/kernel_layer2.avi",CV_FOURCC('M','J','P','G'),60, Size(64*3,64*3),true);
+VideoWriter video3("log2/kernel_layer3.avi",CV_FOURCC('M','J','P','G'),60, Size(64*9,64*5),true);
 void
 convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vector<Mat> > &res){
+	/*Mat one,two,three,four;
+	bool chk = false;
+	Mat step12(Size(64*2,64),CV_8UC3,Scalar::all(0));
+	Mat step34(Size(64*2,64),CV_8UC3,Scalar::all(0));
+	Mat dst(Size(64*2,64*2),CV_8UC3,Scalar::all(0)); */
+	
+	int nsamples = x.size();
+	res.clear();
+	for(int i = 0; i < nsamples; i++){
+		vector<Mat> tmp;
+		tmp.push_back(x[i]);
+		res.push_back(tmp);
+	}
 
-    int nsamples = x.size();
-    res.clear();
-    for(int i = 0; i < nsamples; i++){
-        vector<Mat> tmp;
-        tmp.push_back(x[i]);
-        res.push_back(tmp);
-    }
-    vector<vector<Mat> > tpvec(nsamples);
+	vector<vector<Mat> > tpvec(nsamples);
     for(int cl = 0; cl < convConfig.size(); cl++){
-        for(int i = 0; i < tpvec.size(); i++){
-            tpvec[i].clear();
-        }
+        for(int i = 0; i < tpvec.size(); i++) tpvec[i].clear();
         int pdim = convConfig[cl].PoolingDim;
         int mod = (int)(nsamples/10);
         for(int s = 0; s < nsamples; s++){
+        	//cout << res[s].size() <<endl; res[0]->1 res[1]->3 res[2]->9
             for(int m = 0; m < res[s].size(); m++){
                 for(int k = 0; k < convConfig[cl].KernelAmount; k++)
                 {
@@ -453,6 +462,26 @@ convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vec
                     }
                     tmpconv += CLayers[cl].layer[k].b;
                     tmpconv = nonLinearity(tmpconv);
+                    /*if(s==10 && k==2 && m==0){
+						if(cl==0){
+							normalize(res[s][m],one, 0,255,NORM_MINMAX, CV_8U);
+							normalize(tmpconv,two, 0,255,NORM_MINMAX, CV_8U);
+							cvtColor(one,one,COLOR_GRAY2BGR);
+							cvtColor(two,two,COLOR_GRAY2BGR);
+							hconcat(one,two,step12);
+						}
+						else if (cl==1){
+							normalize(tmpconv,three, 0,255,NORM_MINMAX, CV_8U);
+							cvtColor(three,three,COLOR_GRAY2BGR);
+							resize(three,three,Size(64,64));
+						}
+						else if (cl==2){;
+							normalize(tmpconv,four, 0,255,NORM_MINMAX, CV_8U);
+							cvtColor(four,four,COLOR_GRAY2BGR);
+							resize(four,four,Size(64,64));
+							hconcat(three,four,step34);
+						}
+				    }*/
                     tpvec[s].push_back(tmpconv);
                 }
                 if(convConfig[cl].useLRN){
@@ -474,10 +503,129 @@ convAndPooling4Test(const vector<Mat> &x, const vector<Cvl> &CLayers, vector<vec
                 }
             }
         }
+        //cout << "tpvec " <<tpvec.size() << ", "<< tpvec[0].size()<<endl;
         swap(res, tpvec);
     }   
     for(int i = 0; i < tpvec.size(); i++){
         tpvec[i].clear();
     }  
+    //vconcat(step12,step34,dst);
+    //video << dst;
     tpvec.clear();
+}
+
+void
+convAndPooling4Video(const vector<Mat> &x, const vector<Cvl> &CLayers){
+	Mat one,two,three,four;
+	Mat step12(Size(64*2,64),CV_8UC3,Scalar::all(0));
+	Mat step34(Size(64*2,64),CV_8UC3,Scalar::all(0));
+	Mat dst(Size(64*2,64*2),CV_8UC3,Scalar::all(0));
+	Mat dst1(Size(64*3,64),CV_8UC3,Scalar::all(0));
+	Mat dst2(Size(64*3,64*3),CV_8UC3,Scalar::all(0));
+	Mat dst3(Size(64*9,64*5),CV_8UC3,Scalar::all(0));
+
+	int nsamples = x.size();
+	vector<vector<Mat> > tpvec(nsamples);
+	vector<vector<Mat> > res;
+	for(int i = 0; i < nsamples; i++){
+		vector<Mat> tmp;
+		tmp.push_back(x[i]);
+		res.push_back(tmp);
+	}
+	for(int s = 0; s < nsamples; s++){
+		for(int cl = 0; cl < convConfig.size(); cl++){
+			vector<Mat> aaa;
+			for(int i = 0; i < tpvec.size(); i++) tpvec[i].clear();
+			int pdim = convConfig[cl].PoolingDim;
+			for(int m = 0; m < res[0].size(); m++){
+				for(int k = 0; k < convConfig[cl].KernelAmount; k++)
+				{
+					Mat temp = rot90(CLayers[cl].layer[k].W, 2);
+					Mat tmpconv = convCalc(res[0][m], temp, CONV_SAME);
+					tmpconv += CLayers[cl].layer[k].b;
+					tmpconv = nonLinearity(tmpconv);
+					if(cl==0){
+						normalize(res[0][m],one, 0,255,NORM_MINMAX, CV_8U);
+						normalize(tmpconv,two, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(one,one,COLOR_GRAY2BGR);
+						cvtColor(two,two,COLOR_GRAY2BGR);
+						hconcat(one,two,step12);
+						Mat buf;
+						normalize(tmpconv,buf, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(buf,buf,COLOR_GRAY2BGR);
+						aaa.push_back(buf);
+						if (aaa.size()==3) hconcat(aaa,dst1);
+					}
+					else if (cl==1){
+						normalize(tmpconv,three, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(three,three,COLOR_GRAY2BGR);
+						resize(three,three,Size(64,64));
+						Mat buf;
+						normalize(tmpconv,buf, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(buf,buf,COLOR_GRAY2BGR);
+						resize(buf,buf,Size(64,64));
+						aaa.push_back(buf);
+						if (aaa.size()==9) dst2 = img_reshape(aaa,Size(9,1),Size(3,3));
+					}
+					else if (cl==2){
+						normalize(tmpconv,four, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(four,four,COLOR_GRAY2BGR);
+						resize(four,four,Size(64,64));
+						hconcat(three,four,step34);
+						Mat buf;
+						normalize(tmpconv,buf, 0,255,NORM_MINMAX, CV_8U);
+						cvtColor(buf,buf,COLOR_GRAY2BGR);
+						resize(buf,buf,Size(64,64));
+						aaa.push_back(buf);
+						if (aaa.size()==45) dst3 = img_reshape(aaa,Size(45,1),Size(9,5));
+					}
+					tpvec[0].push_back(tmpconv);
+				}
+				if(convConfig[cl].useLRN){
+					std::vector<Mat>tmp;
+					for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+						Mat temp = tpvec[0][m * convConfig[cl].KernelAmount + k];
+						temp = localResponseNorm(tpvec, cl, k, 0, m);
+						tmp.push_back(temp);
+					}
+					for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+						Mat temp = tmp[k];
+						tpvec[0][m * convConfig[cl].KernelAmount + k] = Pooling(tmp[k], pdim, pdim, pooling_method);
+					}
+				}else{
+					for(int k = 0; k < convConfig[cl].KernelAmount; k++){
+						Mat temp = tpvec[0][m * convConfig[cl].KernelAmount + k];
+						tpvec[0][m * convConfig[cl].KernelAmount + k] = Pooling(temp, pdim, pdim, pooling_method);
+					}
+				}
+			}
+			swap(res, tpvec);
+			aaa.clear();
+		}
+	}
+    for(int i = 0; i < tpvec.size(); i++) tpvec[i].clear();
+    vconcat(step12,step34,dst);
+    video << dst;
+    video1 << dst1;
+    video2 << dst2;
+    video3 << dst3;
+    tpvec.clear();
+}
+
+Mat img_reshape(vector<Mat> &arr, Size original, Size changed){
+	int nimage = original.width*original.height;
+	if (arr.size() != nimage || nimage != changed.width*changed.height) cout << "image matrix not matched!!" << endl;
+	Mat result(Size(arr[0].cols*(nimage/changed.height),0),CV_8UC3,Scalar::all(0));
+	for(int i=0;i < changed.height; i++)
+	{
+		vector<Mat> vimg;
+		Mat container(Size(arr[0].cols*(nimage/changed.height),arr[0].rows),CV_8UC3,Scalar::all(0));
+		for(int j=0; j < nimage; j++)
+			if(j<changed.width*(i+1) && j>=changed.width*i) vimg.push_back(arr[j]);
+		hconcat(vimg,container);
+		vconcat(container,result,result);
+		vimg.clear();
+		container.release();
+	}
+	return result;
 }

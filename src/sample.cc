@@ -1,4 +1,6 @@
 #include "general_settings.h"
+#include "convolution.h"
+
 using namespace cv;
 using namespace std;
 
@@ -47,6 +49,8 @@ run(){
 
 }
 
+//void* video_thread(void*);
+
 int 
 main(int argc, char** argv){
     string str = "clean_log";
@@ -57,10 +61,22 @@ main(int argc, char** argv){
     }
     long start, end;
     start = clock();
+
+
+//int status = 0;
+//pthread_t id;
+//if(pthread_create(&id,NULL,video_thread,NULL)) printf("UDP thread create error\n");
+
     run();
+
+//pthread_join(id,(void**)&status);
 
     end = clock();
     cout<<"Totally used time: "<<((double)(end - start)) / CLOCKS_PER_SEC<<" second"<<endl;
     return 0;
 }
 
+/*void* video_thread(void*){
+	UDP.udp();
+	return 0;
+}*/
