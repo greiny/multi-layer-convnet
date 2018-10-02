@@ -139,7 +139,7 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 		inputFile.close();
 	}
 	else cout << endl << "Error - input file could not be opened: " << endl;
-#if 1
+#if 0
 	//set steering angle
 	Mat prev = imread("center/(1).jpg",0);
 	equalizeHist(prev,prev);
@@ -154,53 +154,77 @@ readcsv(vector<Mat> &trainX, Mat &trainY, vector<Mat> &testX, Mat &testY)
 		Mat buf = next-prev;
 		sprintf(file_name,"proc/(%.0f).jpg",(float)(k+1));
 		imwrite(file_name,buf);
-		//calcOpticalFlowFarneback(prev, next, none, 0.5, 3, 15, 3, 5, 1.2, 0);
+
 		next.copyTo(prev);
 		next.release();
 		buf.release();
 	}
 	prev.release();
-#endif
-	random_shuffle(data.begin(), data.end());
-	vector<double> strangle; strangle.reserve(data.size()-1);
 	for (int k=0; k < data.size(); k++ )
 	{
+		char file_name[255];
+		sprintf(file_name,"center/(%.0f).jpg",(float)data[k][0]);
+		Mat buf = imread(file_name,0);
+		resize(buf,buf,Size(),0.5,0.5);
+		equalizeHist(buf,buf);
+		sprintf(file_name,"proc/(%.0f).jpg",(float)(k+1));
+		imwrite(file_name,buf);
+		buf.release();
+	}
+#endif
+	vector<double> strangle; strangle.reserve(data.size()-1);
+	Mat prev = imread("proc/(1).jpg",0);
+	for (int k=0; k < data.size(); k++ )
+	{
+		Mat flow;
+		Mat buf(Size(prev.cols,prev.rows),CV_32FC1);
 		if (data[k][0]==1) continue;
 		char file_name[255];
 		sprintf(file_name,"proc/(%.0f).jpg",(float)data[k][0]);
-		Mat buf = imread(file_name,0);
+		Mat next = imread(file_name,0);
+		calcOpticalFlowFarneback(prev, next, flow, 0.4, 1, 12, 2, 8, 1.2, 0);
+		float flowxy=0;
+		for(int j=0; j<flow.rows; j++){
+			for(int i=0; i<flow.cols; i++){
+				Point2f flowatxy = flow.at<Point2f>(j,i);
+				flowxy = (float)sqrt(pow(flowatxy.x,2)+pow(flowatxy.y,2));
+				buf.at<float>(j,i) = flowxy;
+			}
+		}
 		buf.convertTo(buf, CV_64FC1, 1.0/255, 0);
 		if (k<(int)(data.size()*0.8)) trainX.push_back(buf);
 			else testX.push_back(buf);
 		strangle.push_back(data[k][1]);
+		next.copyTo(prev);
 		buf.release();
 	}
+
 	for (int k=0; k < data.size(); k++ ) delete[] data[k];
 	data.clear();
 
-	trainY = Mat::zeros(8, trainX.size(), CV_64FC1);
-	testY = Mat::zeros(8,testX.size(), CV_64FC1);
+	trainY = Mat::zeros(1, trainX.size(), CV_64FC1);
+	testY = Mat::zeros(1,testX.size(), CV_64FC1);
 	for(int i = 0; i < trainX.size()+testX.size(); i++){
 		double temp = 1;
 		if (i<trainX.size()) {
-			if (strangle[i] > 0.1) trainY.ATD(0, i) = temp;
-			else if (0.05 < strangle[i] && strangle[i]< 0.1) trainY.ATD(1, i) = temp;
-			else if (0.02 < strangle[i] && strangle[i]< 0.05) trainY.ATD(2, i) = temp;
-			else if (0 < strangle[i] && strangle[i] < 0.02) trainY.ATD(3, i) = temp;
-			else if (-0.02 < strangle[i] && strangle[i] < 0) trainY.ATD(4, i) = temp;
-			else if (-0.05 < strangle[i] && strangle[i] < -0.02) trainY.ATD(5, i) = temp;
-			else if (-0.1 < strangle[i] && strangle[i] < -0.05) trainY.ATD(6, i) = temp;
-			else if (strangle[i] < -0.1 ) trainY.ATD(7, i) = temp;
+			if (strangle[i] > 0.1) trainY.ATD(0, i) = 0;
+			else if (0.05 < strangle[i] && strangle[i]< 0.1) trainY.ATD(0, i) = 1;
+			else if (0.02 < strangle[i] && strangle[i]< 0.05) trainY.ATD(0, i) = 2;
+			else if (0 < strangle[i] && strangle[i] < 0.02) trainY.ATD(0, i) = 3;
+			else if (-0.02 < strangle[i] && strangle[i] < 0) trainY.ATD(0, i) = 4;
+			else if (-0.05 < strangle[i] && strangle[i] < -0.02) trainY.ATD(0, i) = 5;
+			else if (-0.1 < strangle[i] && strangle[i] < -0.05) trainY.ATD(0, i) = 6;
+			else if (strangle[i] < -0.1 ) trainY.ATD(0, i) = 7;
 		}
 		else{
-			if (strangle[i] > 0.1) testY.ATD(0, (i-trainX.size())) = temp;
-			else if (0.05 < strangle[i] && strangle[i]< 0.1) testY.ATD(1, (i-trainX.size())) = temp;
-			else if (0.02 < strangle[i] && strangle[i]< 0.05) testY.ATD(2, (i-trainX.size())) = temp;
-			else if (0 < strangle[i] && strangle[i] < 0.02) testY.ATD(3, (i-trainX.size())) = temp;
-			else if (-0.02 < strangle[i] && strangle[i] < 0) testY.ATD(4, (i-trainX.size())) = temp;
-			else if (-0.05 < strangle[i] && strangle[i] < -0.02) testY.ATD(5, (i-trainX.size())) = temp;
-			else if (-0.1 < strangle[i] && strangle[i] < -0.05) testY.ATD(6, (i-trainX.size())) = temp;
-			else if (strangle[i] < -0.1 ) testY.ATD(7, (i-trainX.size())) = temp;
+			if (strangle[i] > 0.1) testY.ATD(0, (i-trainX.size())) = 0;
+			else if (0.05 < strangle[i] && strangle[i]< 0.1) testY.ATD(0, (i-trainX.size())) = 1;
+			else if (0.02 < strangle[i] && strangle[i]< 0.05) testY.ATD(0, (i-trainX.size())) = 2;
+			else if (0 < strangle[i] && strangle[i] < 0.02) testY.ATD(0, (i-trainX.size())) = 3;
+			else if (-0.02 < strangle[i] && strangle[i] < 0) testY.ATD(0, (i-trainX.size())) = 4;
+			else if (-0.05 < strangle[i] && strangle[i] < -0.02) testY.ATD(0, (i-trainX.size())) = 5;
+			else if (-0.1 < strangle[i] && strangle[i] < -0.05) testY.ATD(0, (i-trainX.size())) = 6;
+			else if (strangle[i] < -0.1 ) testY.ATD(0, (i-trainX.size())) = 7;
 		}
 	}
 	strangle.clear();

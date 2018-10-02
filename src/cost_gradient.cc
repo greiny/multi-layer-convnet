@@ -18,9 +18,9 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
     for(int i = 0; i<vecstr.size(); i++){
         P.push_back(cpmap.at(vecstr[i]));
     }
-
     Mat convolvedX = concatenateMat(P, nsamples);
     P.clear();
+
     // full connected layers
     vector<Mat> nonlin;
     vector<Mat> hidden;
@@ -48,8 +48,8 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
 
     Mat groundTruth = Mat::zeros(softmaxConfig.NumClasses, nsamples, CV_64FC1);
     for(int i = 0; i < nsamples; i++){
-        //groundTruth.ATD(y.ATD(0, i), i) = 1.0; // y.ATD(0, i)-> class
-        groundTruth = y;
+        groundTruth.ATD(y.ATD(0, i), i) = 1.0; // y.ATD(0, i)-> class
+        //groundTruth = y;
     }
     double J1 = - sum1(groundTruth.mul(log(p))) / nsamples;
     double J2 = sum1(pow(smr.W, 2.0)) * softmaxConfig.WeightDecay / 2;
@@ -66,6 +66,7 @@ getNetworkCost(vector<Mat> &x, Mat &y, vector<Cvl> &CLayers, vector<Fcl> &hLayer
     smr.cost = J1 + J2 + J3 + J4;
     if(!is_gradient_checking) 
         cout<<", J1 = "<<J1<<", J2 = "<<J2<<", J3 = "<<J3<<", J4 = "<<J4<<", Cost = "<<smr.cost<<endl;
+
     // bp - softmax
     smr.Wgrad =  - (groundTruth - p) * hidden[hidden.size() - 1].t() / nsamples + softmaxConfig.WeightDecay * smr.W;
     smr.bgrad = - reduce((groundTruth - p), 1, CV_REDUCE_SUM) / nsamples;
